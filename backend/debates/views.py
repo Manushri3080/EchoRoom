@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 
 from accounts.permissions import IsNotSuspendedOrBanned
 from .models import Category, DebateTopic, Opinion, OpinionReport, Vote
+from .services import analyze_opinion_text, generate_argument, enhance_argument, summarize_debate, ai_chat
 from .serializers import (
     CategoryPublicSerializer,
     CreateDebateTopicSerializer,
@@ -227,6 +228,8 @@ class ApprovedDebateTopicOpinionsView(APIView):
                 {
                     "id": op.id,
                     "stance": "FOR" if op.stance == Opinion.Stance.FOR else "AGAINST",
+                    "sentiment_label": getattr(op, "sentiment_label", "Neutral"),
+                    "sentiment_score": getattr(op, "sentiment_score", 0.0),
                     "author": op.author.username,
                     "avatar": _avatar_for_username(op.author.username),
                     "avatarColor": _avatar_color_for_stance(op.stance),
@@ -291,14 +294,34 @@ class CreateOpinionView(APIView):
             category__status=Category.Status.APPROVED,
         )
 
+        content = serializer.validated_data["content"]
+        stance_input = serializer.validated_data["stance"]
+        
+        # Call AI Analysis
+        analysis = analyze_opinion_text(content)
+        
+        final_stance = analysis["stance"] if stance_input == "AUTO" else stance_input
+        
         opinion = Opinion.objects.create(
             debate=topic,
             author=request.user,
-            stance=serializer.validated_data["stance"],
-            content=serializer.validated_data["content"],
+            stance=final_stance,
+            content=content,
             parent_opinion=None,
+            sentiment_score=analysis["sentiment_score"],
+            sentiment_label=analysis["sentiment_label"],
+            is_toxic=analysis["is_toxic"],
         )
-        return Response({"id": opinion.id}, status=status.HTTP_201_CREATED)
+        
+        # Auto-moderation
+        if analysis["is_toxic"]:
+            OpinionReport.objects.create(
+                opinion=opinion,
+                reporter=request.user, # System flags it under the user's name or admin. We'll use the user's ID for now, or just leave reason.
+                reason="Auto-flagged by AI (Toxicity/Hate Speech Detected)"
+            )
+            
+        return Response({"id": opinion.id, "stance": final_stance}, status=status.HTTP_201_CREATED)
 
 
 class CreateReplyView(APIView):
@@ -441,4 +464,61 @@ class SuggestCategoryView(APIView):
             suggested_by=request.user,
         )
         return Response({"id": category.id, "status": category.status}, status=status.HTTP_201_CREATED)
+
+# AI Endpoints
+
+class AIGenerateArgumentView(APIView):
+    permission_classes = [IsNotSuspendedOrBanned]
+
+    def post(self, request):
+        topic_title = request.data.get("topic_title", "")
+        stance = request.data.get("stance", "FOR")
+        if not topic_title:
+            return Response({"detail": "topic_title is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        argument = generate_argument(topic_title, stance)
+        return Response({"argument": argument}, status=status.HTTP_200_OK)
+
+class AIEnhanceArgumentView(APIView):
+    permission_classes = [IsNotSuspendedOrBanned]
+
+    def post(self, request):
+        content = request.data.get("content", "")
+        if not content:
+            return Response({"detail": "content is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        enhanced = enhance_argument(content)
+        return Response({"enhanced": enhanced}, status=status.HTTP_200_OK)
+
+class AISummarizeDebateView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, topic_id: int):
+        topic = get_object_or_404(DebateTopic, id=topic_id)
+        
+        # If we already have a cached summary, we could return it, but for demo we regenerate
+        opinions = Opinion.objects.filter(debate=topic).order_by('-created_at')[:20]
+        if not opinions.exists():
+            return Response({"summary": "No opinions to summarize yet."}, status=status.HTTP_200_OK)
+            
+        opinions_text = "\n".join([f"[{o.stance}] {o.content}" for o in opinions])
+        summary = summarize_debate(topic.title, opinions_text)
+        
+        # Cache it
+        topic.ai_summary = summary
+        topic.save(update_fields=['ai_summary'])
+        
+        return Response({"summary": summary}, status=status.HTTP_200_OK)
+
+class AIChatView(APIView):
+    permission_classes = [IsNotSuspendedOrBanned]
+
+    def post(self, request):
+        topic_title = request.data.get("topic_title", "")
+        question = request.data.get("question", "")
+        if not topic_title or not question:
+            return Response({"detail": "topic_title and question are required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        answer = ai_chat(topic_title, question)
+        return Response({"answer": answer}, status=status.HTTP_200_OK)
 
