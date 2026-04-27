@@ -12,6 +12,10 @@ from .views import (
     SuggestCategoryView,
     UpdateDeleteOwnOpinionView,
     VoteOpinionView,
+    AIGenerateArgumentView,
+    AIEnhanceArgumentView,
+    AISummarizeDebateView,
+    AIChatView,
 )
 
 urlpatterns = [
@@ -27,5 +31,10 @@ urlpatterns = [
     path("opinions/<int:opinion_id>/", UpdateDeleteOwnOpinionView.as_view(), name="opinion-update-delete"),
     path("opinions/<int:opinion_id>/vote/", VoteOpinionView.as_view(), name="vote-opinion"),
     path("opinions/<int:opinion_id>/report/", ReportOpinionView.as_view(), name="report-opinion"),
+    # AI endpoints
+    path("ai/generate-argument/", AIGenerateArgumentView.as_view(), name="ai-generate-argument"),
+    path("ai/enhance-argument/", AIEnhanceArgumentView.as_view(), name="ai-enhance-argument"),
+    path("topics/<int:topic_id>/summary/", AISummarizeDebateView.as_view(), name="ai-summarize-debate"),
+    path("ai/chat/", AIChatView.as_view(), name="ai-chat"),
 ]
 
