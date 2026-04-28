@@ -57,6 +57,8 @@ class DebateTopic(models.Model):
         on_delete=models.CASCADE,
         related_name="created_debate_topics",
     )
+    
+    ai_summary = models.TextField(blank=True, default="")
 
     # SRS: Newly created topics are submitted for admin review, and only published after approval.
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING, db_index=True)
@@ -89,6 +91,11 @@ class Opinion(models.Model):
 
     stance = models.CharField(max_length=10, choices=Stance.choices, db_index=True)
     content = models.TextField()
+
+    # AI and Sentiment Fields
+    sentiment_score = models.FloatField(null=True, blank=True)
+    sentiment_label = models.CharField(max_length=20, null=True, blank=True)
+    is_toxic = models.BooleanField(default=False)
 
     # SRS: single-level replies only (enforced in serializer/business logic).
     parent_opinion = models.ForeignKey(
