@@ -1,71 +1,75 @@
 # EchoRoom
 🎙️ EchoRoom
 
-EchoRoom is a modern debate platform built using React.
-It allows users to explore trending debates, share opinions, vote on arguments, and engage in structured discussions across multiple categories.
+A Structured Debate & Opinion Platform
 
-The project focuses on UI/UX design, interactive components, and state management using React.
+EchoRoom is a full-stack web application that enables users to participate in structured debates, share opinions, and engage in meaningful discussions. The platform integrates AI-powered tools and built-in moderation to ensure high-quality and safe interactions.
 
 
-🚀 Features:
+📌 Overview
 
-👤 Authentication
+EchoRoom is designed to solve the problem of unstructured and chaotic online discussions by introducing:
 
-  User Registration page
+Organized debate topics
+Clear For / Against opinion structure
+Controlled moderation workflow
+AI-assisted argument support
 
-  Login page
+Users can explore debates, contribute opinions, vote, reply, and interact in a structured environment.
 
-  Form validation (basic client-side)
 
-  Simulated authentication flow
+✨ Key Features
 
-🏠 Home Page
+👤 User Features
 
-  List of trending debates
+User Registration & Login
+JWT Authentication
+Google Sign-In
+Profile Management
+View personal activity
 
-  Vote percentage visualization
+💬 Debate System
 
-  Search functionality (UI-based)
+Browse approved categories & topics
+Create debate topics (approval-based)
+Post opinions (For / Against)
+Reply to opinions (single-level)
+Vote on opinions
+Report inappropriate content
 
-  Category filtering
+🛠️ Admin Features
 
-💬 Debate Page
+Approve / Reject categories & topics
+Moderate opinions
+Manage users (ban / suspend)
+View system statistics
 
-  View detailed debate topic
+🤖 AI Features
 
-  Post opinions (FOR / AGAINST)
+Generate arguments
+Enhance writing
+Summarize debate topics
+Chat-based assistance
 
-  Upvote / Downvote system
+🛠️ Tech Stack
 
-  Nested replies
+Backend
 
-  Sorting (Top / Recent)
+Django 6
+Django REST Framework
+SimpleJWT
+PostgreSQL (Production) / SQLite (Development)
+Gunicorn, WhiteNoise
+boto3
+vaderSentiment
 
-📂 Categories
+Frontend
 
-  Browse debates by category
-
-  Interactive category cards
-
-🛡 Admin Dashboard
-
-  View pending topics
-
-  Moderate flagged opinions
-
-  Manage users
-
-  View system stats
-
-🛠 Tech Stack
-
-• Web browser-based application
-
-• Frontend: React.js
-
-• Backend: Django with Django REST Framework
-
-• Database: MySQL
+React 19
+Vite
+React Router
+Google OAuth
+ESLint
 
 
 ## 📁 Project Structure  
